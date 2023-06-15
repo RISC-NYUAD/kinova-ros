@@ -94,7 +94,7 @@
         <limit effort="${joint_torque_limit}" velocity="${joint_velocity_limit}"/>
         </xacro:if>
         <origin xyz="${joint_origin_xyz}" rpy="${joint_origin_rpy}"/>
-        <dynamics damping="0.0" friction="0.0"/>
+        <dynamics damping="0.05" friction="0.0"/>
      </joint>
    <xacro:unless value="${fixed}">
      <transmission name="${joint_name}_trans">
@@ -110,13 +110,6 @@
      <!--For torque sensing in simulation-->
      <gazebo reference="${joint_name}">
         <provideFeedback>true</provideFeedback>
-      </gazebo>
-      <gazebo>
-        <plugin name="ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-          <updateRate>30.0</updateRate>
-          <topicName>${joint_name}_ft_sensor_topic</topicName>
-          <jointName>${joint_name}</jointName>
-        </plugin>
       </gazebo>
      </xacro:unless>
   </xacro:macro>

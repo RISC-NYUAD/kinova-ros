@@ -1,0 +1,152 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="optical_flow_macro"
+    params="namespace parent_link frame_rate
+      horizontal_fov image_width image_height
+      enable_visual enable_mesh *geometry *origin">
+    <link name="${namespace}_flow_camera_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <xacro:insert_block name="geometry" />
+        </geometry>
+      </collision>
+      <xacro:if value="${enable_visual}">
+        <visual>
+          <origin xyz="0 0 0" rpy="0 0 ${-pi/2}" />
+          <geometry>
+          	<xacro:if value="${enable_mesh}">
+ 	           <mesh filename="package://uav_simulator/meshes/PX4Flow.stl" scale="1 1 1" /> 
+ 	        </xacro:if>
+            <xacro:unless value="${enable_mesh}">
+               <xacro:insert_block name="geometry" />
+            </xacro:unless>
+          </geometry>
+        </visual>
+      </xacro:if>
+      <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+    <joint name="${namespace}_flow_camera_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent_link}" />
+      <child link="${namespace}_flow_camera_link" />
+    </joint>
+    <gazebo reference="${namespace}_flow_camera_link">
+      <sensor type="camera" name="${namespace}_camera_flow">
+        <always_on>true</always_on>
+        <update_rate>${frame_rate}</update_rate>
+        <camera>
+          <horizontal_fov>${horizontal_fov}</horizontal_fov>
+          <lens>
+            <type>gnomonical</type>
+            <scale_to_hfov>false</scale_to_hfov>
+          </lens>
+          <image>
+            <format>R8G8B8</format>
+            <width>${image_width}</width>
+            <height>${image_height}</height>
+          </image>
+          <clip>
+            <near>0.05</near>
+            <far>10</far>
+          </clip>
+        </camera>
+        <plugin name="${namespace}_camera_flow_controller" filename="libgazebo_ros_camera.so">
+					<alwaysOn>true</alwaysOn>
+		      <updateRate>100.0</updateRate>
+		      <cameraName>camera_flow</cameraName>
+		      <imageTopicName>image_raw</imageTopicName>
+		      <cameraInfoTopicName>camera_info</cameraInfoTopicName>
+		      <frameName>${namespace}_flow_camera_link</frameName>
+		      <hackBaseline>0.07</hackBaseline>
+		      <distortionK1>0.0</distortionK1>
+		      <distortionK2>0.0</distortionK2>
+		      <distortionK3>0.0</distortionK3>
+		      <distortionT1>0.0</distortionT1>
+		      <distortionT2>0.0</distortionT2>
+        </plugin>
+      </sensor>
+    </gazebo> 
+		<link name="${namespace}_z_ranger_link">
+<!--
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="0.01" length="0.01" />
+        </geometry>
+      </collision>
+-->
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <cylinder radius="0.004" length="0.004" />
+        </geometry>
+      </visual>
+      <inertial>
+        <mass value="1e-3" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>		
+    <joint name="${namespace}_z_ranger_joint" type="revolute">
+      <origin xyz="0 0 -0.06" rpy="0 ${-pi/2} 0"/>
+      <parent link="${parent_link}" />
+      <child link="${namespace}_z_ranger_link" />
+      <axis xyz="0 0 1"/>
+      <limit lower="0" upper="0" effort="0.1" velocity="0"/>
+    </joint>		
+	
+
+		<gazebo reference="${namespace}_z_ranger_link">   
+			 <selfCollide>0</selfCollide>     
+		   <sensor type="ray" name="rangefinder">
+			  <pose>0 0 0 0 0 0</pose>
+			  <visualize>true</visualize>
+			  <update_rate>30</update_rate>
+				<ray>
+	        <scan>
+	          <horizontal>
+	            <samples>5</samples>
+	            <resolution>1</resolution>
+	            <min_angle>-0.01</min_angle>
+	            <max_angle>0.01</max_angle>
+	          </horizontal>
+	        </scan>
+	        <range>
+	          <min>0.01</min>
+	          <max>10.0</max>
+	          <resolution>0.01</resolution>
+	        </range>
+	        <noise>
+	          <type>gaussian</type>
+	          <mean>0.0</mean>
+	          <stddev>0.001</stddev>
+	        </noise>
+	      </ray>
+	      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_range.so">
+						<topicName>zranger</topicName>
+            <frameName>${namespace}_z_ranger_link</frameName>
+            <gaussianNoise>0.000</gaussianNoise>
+            <alwaysOn>true</alwaysOn>.
+            <updateRate>30</updateRate>
+            <radiation>infrared</radiation>
+            <fov>0.10</fov>
+            <visualize>true</visualize>
+	      </plugin>
+		   </sensor>            
+		</gazebo>
+
+  </xacro:macro>
+
+
+
+
+
+</robot>
+

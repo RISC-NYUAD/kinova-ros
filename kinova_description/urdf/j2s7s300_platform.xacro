@@ -1,0 +1,54 @@
+<?xml version="1.0"?>
+<!-- j2s7s300 refers to jaco v2 7DOF spherical 3fingers -->
+
+
+<robot xmlns:xi="http://www.w3.org/2001/XInclude"
+	xmlns:gazebo="http://playerstage.sourceforge.net/gazebo/xmlschema/#gz"
+    xmlns:model="http://playerstage.sourceforge.net/gazebo/xmlschema/#model"
+	xmlns:sensor="http://playerstage.sourceforge.net/gazebo/xmlschema/#sensor"
+	xmlns:body="http://playerstage.sourceforge.net/gazebo/xmlschema/#body"
+    xmlns:geom="http://playerstage.sourceforge.net/gazebo/xmlschema/#geom"
+    xmlns:joint="http://playerstage.sourceforge.net/gazebo/xmlschema/#joint"
+	xmlns:controller="http://playerstage.sourceforge.net/gazebo/xmlschema/#controller"
+	xmlns:interface="http://playerstage.sourceforge.net/gazebo/xmlschema/#interface"
+	xmlns:rendering="http://playerstage.sourceforge.net/gazebo/xmlschema/#rendering"
+    xmlns:renderable="http://playerstage.sourceforge.net/gazebo/xmlschema/#renderable"
+    xmlns:physics="http://playerstage.sourceforge.net/gazebo/xmlschema/#physics"
+	xmlns:xacro="http://www.ros.org/wiki/xacro" name="j2s7s300">
+
+
+  <xacro:include filename="$(find kinova_description)/urdf/j2s7s300.xacro"/>
+
+  <link name="root"/>
+  <link name="base_link">
+      <collision>
+        <origin xyz="0 0 0.14" rpy="0 0 0"/>
+        <origin xyz="0 0 0" rpy="0 0 1.57079632679"/>
+        <geometry>
+		  <box size="0.8 0.9 0.28"/>
+        </geometry>
+      </collision>
+      <visual>
+        <origin xyz="0 0 0" rpy="0 0 1.57079632679"/>
+        <geometry>
+          <mesh  filename="model://ridgeback/meshes/ridgeback.stl" scale="1 1 1"/>
+        </geometry>
+      </visual>
+      <inertial>
+      	<mass value="1500"/>
+      	<inertia ixx="250" ixy="0" ixz="0" iyy="250" iyz="0" izz="200"/>
+      </inertial>
+  </link>
+  
+
+  <joint name="connect_robot_and_platform" type="fixed">
+    <child link="root" />
+    <parent link="base_link" />
+    <origin xyz="0 0 0.35" rpy="0 0 0" />    
+  </joint> 
+
+  <xacro:property name="robot_root" value="root" />
+
+  <xacro:j2s7s300  base_parent="${robot_root}"/>
+
+</robot>
