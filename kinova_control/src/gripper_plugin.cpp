@@ -19,7 +19,7 @@ class KinovaGripperPlugin : public ModelPlugin
 
 public: ros::NodeHandle nh;
 public: ros::Subscriber finger_trajectory_sub, finger_tip_1_sub, finger_tip_2_sub, finger_tip_3_sub;
-public: Eigen::Vector3d f_cmd, ft_cmd ;
+public: Eigen::Vector3d f_cmd, ft_cmd , J_f, J_ft, f_des, ft_des;
 private: physics::ModelPtr model;
 private: event::ConnectionPtr updateConnection;
 
@@ -28,6 +28,10 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 	  	this->model = _parent;			
 		f_cmd = Eigen::Vector3d::Zero();
 		ft_cmd = Eigen::Vector3d::Zero();
+		f_des = Eigen::Vector3d::Zero();
+		ft_des = Eigen::Vector3d::Zero();		
+		J_f = Eigen::Vector3d::Zero();
+		J_ft = Eigen::Vector3d::Zero();							
 					
 		std::string fingerTopic = "/j2s7s300/effort_finger_trajectory_controller/command" ;
 		std::string tip1_Topic = "/j2s7s300/finger_tip_1_position_controller/command" ;
@@ -52,15 +56,29 @@ public: void onUpdate()
 		for(int i = 0 ; i < 3 ; i++){
 			motor_joint = this->model->GetJoint(preface + std::to_string(i+1));
 			double angle = motor_joint->Position(0);
+			f_des(i) = 0.991*f_des(i) + 0.009*f_cmd(i);
+			J_f(i) += 0.001*(angle - f_des(i)) ;
 			double rate = motor_joint->GetVelocity(0);
-			torque = -0.01*(angle - f_cmd(i)) - 0.0006*rate;			
+			if(rate > 1.0){
+				rate = 1.0;
+			}if(rate < -1.0){
+				rate = -1.0;
+			}
+			torque = -0.1*(angle - f_des(i)) - 0.01*rate - 0.0005*J_f(i);			
 			motor_joint->SetForce(0,torque);
 		}
 		for(int i = 0 ; i < 3 ; i++){
 			motor_joint = this->model->GetJoint(preface + preface_tip + std::to_string(i+1));
 			double angle = motor_joint->Position(0);
+			ft_des(i) = 0.991*ft_des(i) + 0.009*ft_cmd(i);
+			J_ft(i) += 0.001*(angle-ft_des(i));
 			double rate = motor_joint->GetVelocity(0);
-			torque = -0.01*(angle - ft_cmd(i)) - 0.0006*rate;			
+			if(rate > 1.0){
+				rate = 1.0;
+			}if(rate < -1.0){
+				rate = -1.0;
+			}
+			torque = -0.1*(angle - ft_des(i)) - 0.01*rate - 0.0005*J_ft(i);			
 			motor_joint->SetForce(0,torque);
 		}		
 

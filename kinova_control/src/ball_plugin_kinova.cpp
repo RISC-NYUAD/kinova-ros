@@ -71,7 +71,7 @@ public:
 
 public: 
   void setBallForces() {
-    ignition::math::Vector3d des_ball_position = ignition::math::Vector3d(1.0,0.0,1.0) ;
+    ignition::math::Vector3d des_ball_position = ignition::math::Vector3d(0.455,0.02,1.1) ;
     
     //ignition::math::Pose3d ball_pose(ball_position, ignition::math::Quaternion(1.0,0.0,0.0,0.0));
   	//ball->SetWorldPose(ball_pose);
@@ -79,9 +79,9 @@ public:
 	ignition::math::Quaternion ball_quat = ball->WorldCoGPose().Rot();
 	ignition::math::Vector3d ball_velocity = ball_quat.RotateVector(ball->RelativeLinearVel()) ; 
 	
-  	double fx = -1.5 * (ball_position.X() - des_ball_position.X()) - 0.007*ball_velocity.X();
-  	double fy = -1.5 * (ball_position.Y() - des_ball_position.Y()) - 0.007*ball_velocity.Y();
-  	double fz = -1.5 * (ball_position.Z() - des_ball_position.Z()) - 0.03*ball_velocity.Z() + 0.05*9.81;
+  	double fx = -2.8 * (ball_position.X() - des_ball_position.X()) - 0.05*ball_velocity.X();
+  	double fy = -2.8 * (ball_position.Y() - des_ball_position.Y()) - 0.05*ball_velocity.Y();
+  	double fz = -2.8 * (ball_position.Z() - des_ball_position.Z()) - 0.05*ball_velocity.Z() + 0.05*9.81;
   	fx *= this->applied_gain ;
   	fy *= this->applied_gain ;
   	fz *= this->applied_gain ;
@@ -90,7 +90,7 @@ public:
 
 public: 
   void resetBallPosition() {
-    ignition::math::Vector3d des_ball_position = ignition::math::Vector3d(1.0,0.0,1.0) ;
+    ignition::math::Vector3d des_ball_position = ignition::math::Vector3d(0.455,0.02,1.1) ;
     
     ignition::math::Pose3d ball_pose(des_ball_position, ignition::math::Quaternion(1.0,0.0,0.0,0.0));
 	ball->ResetPhysicsStates();	

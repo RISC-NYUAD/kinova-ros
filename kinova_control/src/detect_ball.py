@@ -21,44 +21,48 @@ def img_cb(image_in):
     global pub
     
     cv_image = bridge.imgmsg_to_cv2(image_in, 'bgr8')
+    boundaries = [
+        ([0, 0, 80], [80, 80, 255])
+        ]
 
-    gray = cv2.cvtColor(cv_image, cv2.COLOR_BGR2GRAY)
-    cv2.aruco_dict = cv2.aruco.Dictionary_get(cv2.aruco.DICT_4X4_50)
-    params = cv2.aruco.DetectorParameters_create()
+    for(lower, upper) in boundaries:
+        # creates numpy array from boundaries
+        #Single-loop 'for'
+        lower = np.array(lower, dtype = "uint8")
+        upper = np.array(upper, dtype = "uint8")
 
+        # finds colors in boundaries a applies a mask
+        mask = cv2.inRange(cv_image, lower, upper)
+        output = cv2.bitwise_and(cv_image, cv_image, mask = mask)
+
+        # saves the image
+        #cv2.imwrite('Red Image', output)
+    """
+    dx = 0
+    dy = 0
+    L = 0
+    rows,cols = mask.shape
+    for i in range(rows):
+        for j in range(cols):
+            k = mask[i,j]
+            if(k > 0):
+                dx += i
+                dy += j
+                L += 1
+    p_x = dx/L
+    p_y = dy/L
+    """        
+
+    L = list(zip(*np.where(mask>0)))
+    N = np.array(L)
+    PX = np.sum(N[:,0]) / len(L)
+    PY = np.sum(N[:,1]) / len(L)
     
-    corners, ids, rejected_img_points = cv2.aruco.detectMarkers(gray, cv2.aruco_dict, parameters=params, cameraMatrix=CamMatrix, distCoeff=CamDist)
-    if len(corners) > 0:
-        if(ids[0]==10):
-            rvec, tvec, marker_points = cv2.aruco.estimatePoseSingleMarkers(corners[0], 0.375, CamMatrix, CamDist)
-            cv2.aruco.drawDetectedMarkers(cv_image, corners)
-            cv2.aruco.drawAxis(cv_image, CamMatrix, CamDist, rvec, tvec, 0.01)
-            msg = TransformStamped()
-            rotation_matrix = np.array([[0, 0, 0, 0],
-                            [0, 0, 0, 0],
-                            [0, 0, 0, 0],
-                            [0, 0, 0, 1]],
-                            dtype=float)
-            rotation_matrix[:3, :3], _ = cv2.Rodrigues(rvec)
-            Q = tf.transformations.quaternion_from_matrix(rotation_matrix)
-            msg.transform.translation.x = tvec[0][0][0]
-            msg.transform.translation.y = tvec[0][0][1]
-            msg.transform.translation.z = tvec[0][0][2]
-            msg.transform.rotation.x = Q[0]
-            msg.transform.rotation.y = Q[1]
-            msg.transform.rotation.z = Q[2]
-            msg.transform.rotation.w = Q[3]
-
-            stamp = rospy.get_rostime()
-            msg.header.stamp = stamp
-            msg.header.frame_id = "/m100/camera_front"
-            msg.child_frame_id = "/m100/aruco_target"
-            pub.publish(msg)
-
-            br = tf.TransformBroadcaster()
-            br.sendTransform((msg.transform.translation.x,msg.transform.translation.y,msg.transform.translation.z), Q, stamp, msg.child_frame_id, msg.header.frame_id)
-            
-    cv2.imshow("Image Preview", cv_image)
+    tot_pixel = output.size
+    red_pixel = np.count_nonzero(output)
+    percentage = round(100 * red_pixel / tot_pixel, 2)
+    print(percentage, PX, PY)
+    cv2.imshow("Image Preview", output)
     cv2.waitKey(3)
 
 if __name__ == '__main__':
@@ -72,6 +76,6 @@ if __name__ == '__main__':
     CamMatrix = np.array(cam_info.K).reshape((3,3))
     CamDist = np.array(cam_info.D).reshape((1,5))
 
-    rospy.Subscriber("/camera_flow/image_raw", Image, img_cb)
+    rospy.Subscriber("/camera_flow/image_raw", Image, img_cb, queue_size=1)
     rospy.spin()    
     

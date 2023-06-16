@@ -20,5 +20,63 @@
       </camera>
     </gui>
 
+<!--
+    <light type="directional" name="light_1">
+      <pose>0 0 1.5 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <linear>0.2</linear>
+        <constant>0.8</constant>
+        <quadratic>0.01</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+      <direction>1 0 0</direction>
+    </light>
+
+    <light type="directional" name="light_3">
+      <pose>0 0 1.5 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <linear>0.2</linear>
+        <constant>0.8</constant>
+        <quadratic>0.01</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+      <direction>-1 0 0</direction>
+    </light>
+    
+    <light type="directional" name="light_2">
+      <pose>0 0 1.5 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <linear>0.2</linear>
+        <constant>0.8</constant>
+        <quadratic>0.01</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+      <direction>0 1 0</direction>
+    </light>
+    
+    <light type="directional" name="light_4">
+      <pose>0 0 1.5 0 0 0</pose>
+      <diffuse>0.7 0.7 0.7 1</diffuse>
+      <specular>.1 .1 .1 1</specular>
+      <attenuation>
+        <range>20</range>
+        <linear>0.2</linear>
+        <constant>0.8</constant>
+        <quadratic>0.01</quadratic>
+      </attenuation>
+      <cast_shadows>false</cast_shadows>
+      <direction>0 -1 0</direction>
+    </light>
+-->
+
   </world>
 </sdf>
