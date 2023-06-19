@@ -68,8 +68,8 @@ def img_cb(image_in):
         results.linear.y = PY
         results.linear.z = percentage
         pub.publish(results)
-        cv2.imshow("Image Preview", output)
-        cv2.waitKey(3)
+        #cv2.imshow("Image Preview", output)
+        #cv2.waitKey(3)
     else:
         results = Twist()
         results.linear.x = -1

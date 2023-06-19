@@ -14,7 +14,7 @@
 #include <trajectory_msgs/JointTrajectory.h>
 #include <Eigen/Dense>
 
-ros::Publisher joint_cmd_pub, finger_cmd_pub, finger_tip_1_cmd_pub, finger_tip_2_cmd_pub, finger_tip_3_cmd_pub;
+ros::Publisher joint_cmd_pub, finger_cmd_pub, finger_tip_1_cmd_pub, finger_tip_2_cmd_pub, finger_tip_3_cmd_pub ;
 trajectory_msgs::JointTrajectory q_msg, finger_msg;
 
 struct RobotState{
@@ -50,6 +50,8 @@ double lp_filt(double, double, double);
 RobotState ROBOT;
 SetpointState ROBOT_CMD;
 double c_dt;
+bool FORCE_GRIPPER_OPEN = false;
+double gripper_forced_t = 0.0;
 
 int main(int argc, char** argv)
 {
@@ -108,6 +110,17 @@ void joint_vel_cb(const std_msgs::Float32MultiArray& msg){
 }
 
 void ranger_cb(const sensor_msgs::Range& msg){
+
+	if(FORCE_GRIPPER_OPEN){
+		double dt = ros::Time::now().toSec() - gripper_forced_t ;
+		if(dt > 5.0){
+			FORCE_GRIPPER_OPEN = false;
+		}else{
+			ROBOT_CMD.fingers_closed = false;
+			return;
+		}	
+	}
+
 	ROBOT.ranger = msg.range;	
 	if(ROBOT.ranger < 0.045){
 		ROBOT.r_t++;
@@ -172,6 +185,8 @@ void control_update(const ros::TimerEvent& e){
 void reset_cb(const std_msgs::Bool& msg){
 	ROBOT.ranger = 10.0;
 	init_params();
+	FORCE_GRIPPER_OPEN = true;
+	gripper_forced_t = ros::Time::now().toSec();
 }
 
 void init_params(void){
