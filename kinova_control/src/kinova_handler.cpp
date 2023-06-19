@@ -109,7 +109,7 @@ void joint_vel_cb(const std_msgs::Float32MultiArray& msg){
 
 void ranger_cb(const sensor_msgs::Range& msg){
 	ROBOT.ranger = msg.range;	
-	if(ROBOT.ranger < 0.05){
+	if(ROBOT.ranger < 0.045){
 		ROBOT.r_t++;
 		if(!ROBOT_CMD.fingers_closed){
 			if(ROBOT.r_t > 55){
@@ -119,9 +119,11 @@ void ranger_cb(const sensor_msgs::Range& msg){
 		}
 
 	}else{
-		ROBOT.r_t = 0;
-		if((ros::Time::now().toSec() - ROBOT.ranger_activation_t) > 5.0){ 
-			ROBOT_CMD.fingers_closed = false;
+		if(ROBOT.ranger > 0.084){
+			ROBOT.r_t = 0;
+			if((ros::Time::now().toSec() - ROBOT.ranger_activation_t) > 5.0){ 
+				ROBOT_CMD.fingers_closed = false;
+			}
 		}
 	}
 //	ROS_WARN("GOT RANGER MSG: %.2f",msg.range);
@@ -190,7 +192,7 @@ void init_params(void){
 	ROBOT_CMD.q_des(3) = 4.0;
 	ROBOT_CMD.q_des(4) = 0.147;
 	ROBOT_CMD.q_des(5) = 2.0;
-	ROBOT_CMD.q_des(6) = 0.0;
+	ROBOT_CMD.q_des(6) = -1.5708;
 }
 
 

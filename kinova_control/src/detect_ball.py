@@ -54,16 +54,28 @@ def img_cb(image_in):
     """        
 
     L = list(zip(*np.where(mask>0)))
-    N = np.array(L)
-    PX = np.sum(N[:,0]) / len(L)
-    PY = np.sum(N[:,1]) / len(L)
-    
-    tot_pixel = output.size
-    red_pixel = np.count_nonzero(output)
-    percentage = round(100 * red_pixel / tot_pixel, 2)
-    print(percentage, PX, PY)
-    cv2.imshow("Image Preview", output)
-    cv2.waitKey(3)
+    if(len(L)>0):
+        N = np.array(L)
+        PX = np.sum(N[:,0]) / len(L)
+        PY = np.sum(N[:,1]) / len(L)
+        
+        tot_pixel = output.size
+        red_pixel = np.count_nonzero(output)
+        percentage = round(100 * red_pixel / tot_pixel, 2)
+        #print(percentage, PX, PY)
+        results = Twist()
+        results.linear.x = PX
+        results.linear.y = PY
+        results.linear.z = percentage
+        pub.publish(results)
+        cv2.imshow("Image Preview", output)
+        cv2.waitKey(3)
+    else:
+        results = Twist()
+        results.linear.x = -1
+        results.linear.y = -1
+        results.linear.z = -1
+        pub.publish(results)        
 
 if __name__ == '__main__':
     rospy.init_node('ball_tracker', anonymous=True)

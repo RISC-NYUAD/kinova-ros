@@ -23,15 +23,17 @@
   <link name="base_link">
       <collision>
         <origin xyz="0 0 0.14" rpy="0 0 0"/>
-        <origin xyz="0 0 0" rpy="0 0 1.57079632679"/>
         <geometry>
 		  <box size="0.8 0.9 0.28"/>
         </geometry>
       </collision>
       <visual>
-        <origin xyz="0 0 0" rpy="0 0 1.57079632679"/>
+        <origin xyz="0 0 0.14" rpy="0 0 0"/>
         <geometry>
+		  <box size="0.8 0.9 0.28"/>
+<!--
           <mesh  filename="model://ridgeback/meshes/ridgeback.stl" scale="1 1 1"/>
+-->
         </geometry>
       </visual>
       <inertial>
@@ -44,7 +46,7 @@
   <joint name="connect_robot_and_platform" type="fixed">
     <child link="root" />
     <parent link="base_link" />
-    <origin xyz="0 0 0.35" rpy="0 0 0" />    
+    <origin xyz="0 0 0.29" rpy="0 0 0" />    
   </joint> 
 
   <xacro:property name="robot_root" value="root" />

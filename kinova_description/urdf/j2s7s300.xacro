@@ -174,7 +174,7 @@
 		enable_visual="1"
 		enable_mesh="1">
 		<cylinder radius="0.01" length="0.01"/>
-		<origin xyz="0.02 0.02 -0.065" rpy="0.0 ${-pi/2} 0.0" />
+		<origin xyz="0.0 0.02 -0.02" rpy="0.0 ${-pi/2} 0.0" />
 	  </xacro:optical_flow_macro>
 		<gazebo>
 		 <plugin name="gazebo_grasp_fix" filename="libgazebo_grasp_fix.so">

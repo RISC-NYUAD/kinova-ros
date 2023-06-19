@@ -108,7 +108,7 @@
 
 
   <node name="ctrl_handler" type="kinova_handle_node" pkg="kinova_control" output="screen"/>
-
+  <node name="ball_detector" type="detect_ball.py" pkg="kinova_control" output="screen"/>
 
 
 
