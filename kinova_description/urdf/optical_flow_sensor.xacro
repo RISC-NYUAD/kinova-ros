@@ -39,7 +39,7 @@
     </joint>
     <gazebo reference="${namespace}_flow_camera_link">
       <sensor type="camera" name="${namespace}_camera_flow">
-     	<visualize>true</visualize>
+     	<visualize>false</visualize>
         <always_on>true</always_on>
         <update_rate>${frame_rate}</update_rate>
         <camera>
@@ -108,7 +108,7 @@
 			 <selfCollide>0</selfCollide>     
 		   <sensor type="ray" name="rangefinder">
 			  <pose>0 0 0 0 0 0</pose>
-			  <visualize>true</visualize>
+			  <visualize>false</visualize>
 			  <update_rate>30</update_rate>
 				<ray>
 	        <scan>
@@ -131,7 +131,7 @@
 	        </noise>
 	      </ray>
 	      <plugin name="gazebo_ros_head_hokuyo_controller" filename="libgazebo_ros_range.so">
-						<topicName>zranger</topicName>
+			<topicName>zranger</topicName>
             <frameName>${namespace}_z_ranger_link</frameName>
             <gaussianNoise>0.000</gaussianNoise>
             <alwaysOn>true</alwaysOn>.

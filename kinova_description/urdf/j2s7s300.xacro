@@ -19,6 +19,7 @@
     <xacro:include filename="$(find kinova_description)/urdf/kinova_common.xacro" />
     <xacro:include filename="$(find kinova_description)/urdf/kinova_finger_set.xacro" />
     <xacro:include filename="$(find kinova_description)/urdf/optical_flow_sensor.xacro" />
+    <xacro:include filename="$(find kinova_description)/urdf/d435_sensor.xacro" />    
 
 
     <!-- Import all Gazebo-customization elements -->
@@ -163,7 +164,7 @@
         <xacro:kinova_virtual_joint joint_name="${prefix}_joint_end_effector" type="${joint_end_effector_type}" parent="${prefix}_link_7" child="${prefix}_end_effector" joint_axis_xyz="${joint_end_effector_axis_xyz}" joint_origin_xyz="${joint_end_effector_origin_xyz}" joint_origin_rpy="${joint_end_effector_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0"/>
 
         <xacro:kinova_3fingers link_hand="${prefix}_link_7" prefix="${prefix}_"/>
-
+<!--
 	  <xacro:optical_flow_macro
 		namespace="${prefix}"
 		parent_link="${prefix}_end_effector"
@@ -176,6 +177,21 @@
 		<cylinder radius="0.01" length="0.01"/>
 		<origin xyz="0.0 0.02 -0.02" rpy="0.0 ${-pi/2} 0.0" />
 	  </xacro:optical_flow_macro>
+-->
+	  <xacro:d435_macro
+		namespace="${prefix}"
+		parent_link="${prefix}_end_effector"
+		frame_rate="30"
+		horizontal_fov="1.5"
+		image_width="640"
+		image_height="480"
+		enable_visual="1"
+		enable_mesh="1">
+		<cylinder radius="0.01" length="0.01"/>
+		<origin xyz="0.0 0.0 -0.04" rpy="0.0 ${-pi/2} ${pi}" />
+	  </xacro:d435_macro>
+
+
 		<gazebo>
 		 <plugin name="gazebo_grasp_fix" filename="libgazebo_grasp_fix.so">
 		    <arm>

@@ -1,0 +1,82 @@
+<?xml version="1.0"?>
+
+<robot xmlns:xacro="http://ros.org/wiki/xacro">
+
+  <xacro:macro name="d435_macro"
+    params="namespace parent_link frame_rate
+      horizontal_fov image_width image_height
+      enable_visual enable_mesh *geometry *origin">
+    <link name="${namespace}_d435_camera_link">
+      <collision>
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <geometry>
+          <xacro:insert_block name="geometry" />
+        </geometry>
+      </collision>
+      <xacro:if value="${enable_visual}">
+        <visual>
+          <origin xyz="0 0 0" rpy="${pi/2} 0 ${pi/2}" />
+          <geometry>
+          	<xacro:if value="${enable_mesh}">
+ 	           <mesh filename="package://uav_simulator/meshes/d435_simple.dae" scale="1 1 1" /> 
+ 	        </xacro:if>
+            <xacro:unless value="${enable_mesh}">
+               <xacro:insert_block name="geometry" />
+            </xacro:unless>
+          </geometry>
+        </visual>
+      </xacro:if>
+      <inertial>
+        <mass value="1e-5" />
+        <origin xyz="0 0 0" rpy="0 0 0" />
+        <inertia ixx="1e-6" ixy="0" ixz="0" iyy="1e-6" iyz="0" izz="1e-6" />
+      </inertial>
+    </link>
+    <joint name="${namespace}_d435_camera_joint" type="fixed">
+      <xacro:insert_block name="origin" />
+      <parent link="${parent_link}" />
+      <child link="${namespace}_d435_camera_link" />
+    </joint>
+    <gazebo reference="${namespace}_d435_camera_link">
+      <sensor type="depth" name="${namespace}_camera_d435">
+     	<visualize>true</visualize>
+        <always_on>true</always_on>
+        <update_rate>${frame_rate}</update_rate>
+        <camera>
+          <horizontal_fov>${horizontal_fov}</horizontal_fov>
+          <image>
+            <format>R8G8B8</format>
+            <width>${image_width}</width>
+            <height>${image_height}</height>
+          </image>
+          <clip>
+            <near>0.01</near>
+            <far>10</far>
+          </clip>
+        </camera>
+        <plugin name="${namespace}_camera_d435_controller" filename="libgazebo_ros_openni_kinect.so">
+			 <alwaysOn>true</alwaysOn>
+          	  <baseline>0.11</baseline>             
+		      <updateRate>${frame_rate}</updateRate>
+		      <cameraName>camera_d435</cameraName>
+		      <imageTopicName>color/image_raw</imageTopicName>
+		      <cameraInfoTopicName>color/camera_info</cameraInfoTopicName>
+          	  <depthImageTopicName>depth/image_raw</depthImageTopicName>              
+	          <depthImageCameraInfoTopicName>depth/camera_info</depthImageCameraInfoTopicName>
+	          <pointCloudTopicName>depth/points</pointCloudTopicName>	
+			  <frameName>${namespace}_d435_camera_link</frameName>
+    	      <pointCloudCutoff>0.5</pointCloudCutoff>
+	          <pointCloudCutoffMax>10</pointCloudCutoffMax>
+			  <distortionK1>0.0</distortionK1>
+		      <distortionK2>0.0</distortionK2>
+		      <distortionK3>0.0</distortionK3>
+		      <distortionT1>0.0</distortionT1>
+		      <distortionT2>0.0</distortionT2>
+        </plugin>
+      </sensor>
+    </gazebo> 
+  </xacro:macro>
+
+</robot>
+
+

@@ -53,6 +53,8 @@ double c_dt;
 bool FORCE_GRIPPER_OPEN = false;
 double gripper_forced_t = 0.0;
 
+Eigen::VectorXd Q_U(7), Q_L(7);
+
 int main(int argc, char** argv)
 {
   ros::init(argc, argv, "kinova_ctrl_node");		
@@ -63,6 +65,8 @@ int main(int argc, char** argv)
   
   init_params();
 	
+  Q_U << 1.57, 4.5, 1.5, 5.2, 1.57, 3.6, 1.57 ;
+  Q_L << -1.57, 1.8, -1.5, 2.5, -1.57, 1.4, -2.0 ;
 
   ros::Subscriber pose_sub = n_h.subscribe("/j2s7s300/joint_states", 1, &joints_cb);  
   ros::Subscriber ee_vel_cmd_sub = n_h.subscribe("/j2s7s300/end_effector_vel_cmds", 1, &ee_vel_cb);
@@ -146,7 +150,10 @@ void control_update(const ros::TimerEvent& e){
 	
 	for(size_t i = 0 ; i < 7 ; i++){	
 		ROBOT_CMD.q_des(i) += ROBOT_CMD.qdot_des(i) * c_dt ;
-	}
+		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)>Q_U(i)) ? Q_U(i) : ROBOT_CMD.q_des(i) ;
+		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)<Q_L(i)) ? Q_L(i) : ROBOT_CMD.q_des(i) ;
+	}	
+	
 	double fingers = 0.0;
 	if(ROBOT_CMD.fingers_closed){
 		fingers = 1.0;
@@ -184,6 +191,7 @@ void control_update(const ros::TimerEvent& e){
 
 void reset_cb(const std_msgs::Bool& msg){
 	ROBOT.ranger = 10.0;
+	ROBOT_CMD.qdot_des = Eigen::VectorXd::Zero(7);
 	init_params();
 	FORCE_GRIPPER_OPEN = true;
 	gripper_forced_t = ros::Time::now().toSec();

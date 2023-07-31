@@ -195,5 +195,5 @@ j2s7s300:
       p: 200
     type: effort_controllers/JointPositionController
   joint_state_controller:
-    publish_rate: 50
+    publish_rate: 30
     type: joint_state_controller/JointStateController
