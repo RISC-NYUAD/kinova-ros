@@ -13,6 +13,8 @@ global CamMatrix
 global CamDist
 global bridge
 global pub
+global DepthCamMatrix
+global depth_array
 
 def img_cb(image_in):
     global CamMatrix
@@ -59,6 +61,7 @@ def img_cb(image_in):
         PX = np.sum(N[:,0]) / len(L)
         PY = np.sum(N[:,1]) / len(L)
         
+        
         tot_pixel = output.size
         red_pixel = np.count_nonzero(output)
         percentage = round(100 * red_pixel / tot_pixel, 2)
@@ -77,17 +80,28 @@ def img_cb(image_in):
         results.linear.z = -1
         pub.publish(results)        
 
+def depth_img_cb(depth_image):
+    global depth_array
+    global bridge
+    
+    image = bridge.imgmsg_to_cv2(depth_image,"32FC1")
+    depth_array = np.array(image, dtype=np.float32)
+    return
+
 if __name__ == '__main__':
     rospy.init_node('ball_tracker', anonymous=True)
 
     pub = rospy.Publisher('/j2s7s300/ball_data', Twist, queue_size=1) 
     bridge = CvBridge()
     
-    cam_info = rospy.wait_for_message("/camera_flow/camera_info", CameraInfo)
+    cam_info = rospy.wait_for_message("/camera_d435/color/camera_info", CameraInfo)
+    depth_cam_info = rospy.wait_for_message("/camera_d435/depth/camera_info", CameraInfo)    
 
     CamMatrix = np.array(cam_info.K).reshape((3,3))
     CamDist = np.array(cam_info.D).reshape((1,5))
+    DepthCamMatrix = np.array(depth_cam_info.K).reshape((3,3))
 
-    rospy.Subscriber("/camera_flow/image_raw", Image, img_cb, queue_size=1)
+    rospy.Subscriber("/camera_d435/color/image_raw", Image, img_cb, queue_size=1)
+    rospy.Subscriber("/camera_d435/depth/image_raw", Image, depth_img_cb, queue_size=1)    
     rospy.spin()    
     
