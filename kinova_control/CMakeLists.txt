@@ -49,7 +49,7 @@ install(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
-add_executable(kinova_handle_node src/kinova_handler.cpp)
+add_executable(kinova_handle_node src/kinova_handler.cpp src/libraries/utils.cpp)
 target_link_libraries(kinova_handle_node ${catkin_LIBRARIES})
 
 add_library(kinova_gripper_plugin SHARED src/gripper_plugin.cpp)
