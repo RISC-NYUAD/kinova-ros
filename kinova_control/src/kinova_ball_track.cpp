@@ -109,17 +109,19 @@ void control_update(const ros::TimerEvent& e){
 	Eigen::Vector3d unit_P = (1.0/P_norm) * P_ ;	
 
 	double error_func = 1.0 - z.transpose() * unit_P ;
-	if(error_func < 0.2){
-		out_msg.linear.x = lin_vels(0);
-		out_msg.linear.y = lin_vels(1);
-		out_msg.linear.z = lin_vels(2);
-	}
 	
 	double eta = 0.3;
 	Eigen::Vector3d omega = Utils::cross(unit_P, -eta*z);
 	if(P_norm < 0.15){
 		omega *= P_norm;
+		lin_vels *= P_norm;
 	}
+	if(error_func < 0.2){
+		out_msg.linear.x = lin_vels(0);
+		out_msg.linear.y = lin_vels(1);
+		out_msg.linear.z = lin_vels(2);
+	}
+
 	//Eigen::Vector3d omega = ROBOT.T.block(0,0,3,3) * omega_ ;
 	out_msg.angular.x = omega(0);
 	out_msg.angular.y = omega(1);

@@ -28,9 +28,10 @@ struct RobotState{
 	int r_t;
 	Eigen::Matrix4d T;
 	Eigen::MatrixXd J;
+	double initing_dt;
 
 	RobotState() : q(Eigen::VectorXd::Zero(7)), finger_1(Eigen::Vector3d::Zero()), finger_2(Eigen::Vector3d::Zero()), ranger(10.0), ranger_activation_t(0.0), r_t(0),
-					T(Eigen::Matrix4d::Identity()), J(Eigen::MatrixXd::Zero(6,7)) { }
+					T(Eigen::Matrix4d::Identity()), J(Eigen::MatrixXd::Zero(6,7)), initing_dt(0.0) { }
 };
 
 struct SetpointState{
@@ -196,6 +197,20 @@ void joint_vel_cb(const std_msgs::Float32MultiArray& msg){
 }
 
 void control_update(const ros::TimerEvent& e){
+
+	ROBOT.initing_dt += c_dt;
+	if(ROBOT.initing_dt < 10.0){
+		if(ROBOT.initing_dt > 5.0){
+			ROBOT_CMD.q_des(0) = -0.133;
+			ROBOT_CMD.q_des(1) = 3.14;
+			ROBOT_CMD.q_des(2) = 0.0;
+			ROBOT_CMD.q_des(3) = 4.0;
+			ROBOT_CMD.q_des(4) = 0.147;
+			ROBOT_CMD.q_des(5) = 2.0;
+			ROBOT_CMD.q_des(6) = -1.5708;
+		}
+	}
+
 	if(ROBOT_CMD.mode == 1){		
 	  run_ee_vel_ctrl(); //updates ROBOT_CMD.qdot_des
 	}
@@ -294,15 +309,8 @@ void init_params(void){
 	for(size_t i = 0 ; i < 3 ; i++){
 		finger_msg.joint_names.push_back(finger_prefix + std::to_string(i+1));
 	}
-/*
-	ROBOT_CMD.q_des(0) = -0.133;
-	ROBOT_CMD.q_des(1) = 3.14;
-	ROBOT_CMD.q_des(2) = 0.0;
-	ROBOT_CMD.q_des(3) = 4.0;
-	ROBOT_CMD.q_des(4) = 0.147;
-	ROBOT_CMD.q_des(5) = 2.0;
-	ROBOT_CMD.q_des(6) = -1.5708;
-*/
+
+
 	ROBOT_CMD.q_des(0) = 0.0;
 	ROBOT_CMD.q_des(1) = M_PI + 0.533;
 	ROBOT_CMD.q_des(2) = 0.0;
@@ -310,17 +318,14 @@ void init_params(void){
 	ROBOT_CMD.q_des(4) = M_PI;
 	ROBOT_CMD.q_des(5) = M_PI;
 	ROBOT_CMD.q_des(6) = -M_PI;
-
+	
+	ROBOT.initing_dt = 0.0;
 
 }
 
 double lp_filt(double x1, double x2, double a){
 	return (x1*a + x2*(1-a));
 }
-
-
-
-
 
 
 
