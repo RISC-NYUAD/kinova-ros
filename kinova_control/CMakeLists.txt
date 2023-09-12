@@ -52,6 +52,9 @@ install(PROGRAMS
 add_executable(kinova_handle_node src/kinova_handler.cpp src/libraries/utils.cpp)
 target_link_libraries(kinova_handle_node ${catkin_LIBRARIES})
 
+add_executable(kinova_ee_track_node src/kinova_ball_track.cpp src/libraries/utils.cpp)
+target_link_libraries(kinova_ee_track_node ${catkin_LIBRARIES})
+
 add_library(kinova_gripper_plugin SHARED src/gripper_plugin.cpp)
 target_link_libraries(kinova_gripper_plugin ${catkin_LIBRARIES} ${GAZEBO_LIBRARIES})
 
