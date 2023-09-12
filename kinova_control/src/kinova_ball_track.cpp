@@ -35,6 +35,7 @@ struct SetpointState{
 void joints_cb(const sensor_msgs::JointState& );
 Eigen::Matrix4d fkbas(Eigen::VectorXd );
 void control_update(const ros::TimerEvent&);
+void control_update_opt(const ros::TimerEvent&);
 double lp_filt(double, double, double);
 Eigen::Vector3d sq_err(Eigen::Vector3d );
 double sq_err(double );
@@ -99,13 +100,31 @@ Eigen::Matrix4d fkbas(Eigen::VectorXd x){
 void control_update(const ros::TimerEvent& e){
 	ROBOT.T = fkbas(ROBOT.q); 
 	Eigen::Vector3d ee_w_pos_error = ROBOT.T.block(0,3,3,1) - ROBOT_CMD.ball_pos;
-	std::cout << ee_w_pos_error.transpose() << std::endl;
-	Eigen::Vector3d lin_vels = -0.15*sq_err(ee_w_pos_error);
+	Eigen::Vector3d lin_vels = -0.05*sq_err(ee_w_pos_error);
 	geometry_msgs::Twist out_msg;
-	out_msg.linear.x = lin_vels(0);
-	out_msg.linear.y = lin_vels(1);
-	out_msg.linear.z = lin_vels(2);
-	//TODO: Add orientation control as well
+
+	Eigen::Vector3d z = ROBOT.T.block(0,2,3,1);
+	Eigen::Vector3d P_ = -ee_w_pos_error;
+	double P_norm = P_.norm() + 0.001;
+	Eigen::Vector3d unit_P = (1.0/P_norm) * P_ ;	
+
+	double error_func = 1.0 - z.transpose() * unit_P ;
+	if(error_func < 0.2){
+		out_msg.linear.x = lin_vels(0);
+		out_msg.linear.y = lin_vels(1);
+		out_msg.linear.z = lin_vels(2);
+	}
+	
+	double eta = 0.3;
+	Eigen::Vector3d omega = Utils::cross(unit_P, -eta*z);
+	if(P_norm < 0.15){
+		omega *= P_norm;
+	}
+	//Eigen::Vector3d omega = ROBOT.T.block(0,0,3,3) * omega_ ;
+	out_msg.angular.x = omega(0);
+	out_msg.angular.y = omega(1);
+	out_msg.angular.z = omega(2);	
+
 	ee_vel_pub.publish(out_msg);
 }
 
@@ -137,7 +156,53 @@ Eigen::Vector3d sq_err(Eigen::Vector3d x){
 	return result;
 }
 
+void control_update_opt(const ros::TimerEvent& e){ //KINDA OVERKILL, DEPRECATED
+	ROBOT.T = fkbas(ROBOT.q); 
+	Eigen::Vector3d ee_w_pos_error = ROBOT.T.block(0,3,3,1) - ROBOT_CMD.ball_pos;
+	Eigen::Vector3d lin_vels = -0.15*sq_err(ee_w_pos_error);
+	geometry_msgs::Twist out_msg;
 
+/*
+	out_msg.linear.x = lin_vels(0);
+	out_msg.linear.y = lin_vels(1);
+	out_msg.linear.z = lin_vels(2);
+*/
+	Eigen::Vector3d P_ = -ee_w_pos_error;
+	double P_norm = P_.norm() + 0.001;
+	Eigen::Vector3d unit_P = (1.0/P_norm) * P_ ;	
+//	unit_P << 0.0, 1.0, 0.0 ;	
+	
+	Eigen::Vector3d nz = ROBOT.T.block(0,2,3,1);
+	double error = 1.0 - nz.transpose() * unit_P ;
+	std::cout << "===============" << std::endl;
+	std::cout << unit_P.transpose() << std::endl;
+	std::cout << nz.transpose() << std::endl;
+	std::cout << "===============" << std::endl;
+	Eigen::Matrix3d R_S = Utils::S(nz) ; 
+	Eigen::Vector3d A_column = (unit_P.transpose() * R_S).transpose() ;
+	
+	double lambda = 1.5;
+	Eigen::Matrix3d Hm =  2.0 * ( A_column * (A_column.transpose()) + lambda * Eigen::Matrix3d::Identity() );
+	double b_hat = 0.9 * sq_err(error) ;
+	Eigen::Vector3d fm = 2.0 * b_hat * A_column ;
+	
+	Eigen::MatrixXd Am(6,3);
+	Am.block(0,0,3,3) = Eigen::Matrix3d::Identity();
+	Am.block(3,0,3,3) = -Eigen::Matrix3d::Identity();
+	Eigen::VectorXd bm(6);
+	bm << -0.1, -0.1, -0.1, -0.1, -0.1, -0.1 ;
+	Eigen::VectorXd omega = Utils::solveQP(Hm, fm, Am, bm);
+	if(!(omega.size()>0)){
+		ROS_ERROR("UNSOLVABLE");
+		omega = Eigen::VectorXd::Zero(3) ;
+	}
+	out_msg.angular.x = omega(0);
+	out_msg.angular.y = omega(1);
+	out_msg.angular.z = omega(2);
+
+
+	ee_vel_pub.publish(out_msg);
+}
 
 
 

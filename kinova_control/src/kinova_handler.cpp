@@ -76,8 +76,8 @@ int main(int argc, char** argv)
   
   init_params();
 	
-  Q_U << 1.57, 4.5, 1.5, 5.2, 5.5, 3.6, 5.5 ;
-  Q_L << -1.57, 1.8, -1.5, 2.5, -5.5, 1.4, -5.5 ;
+  Q_U << 6.2, 5.4, 6.2, 5.7, 5.5, 5.1, 5.5 ;
+  Q_L << -6.2, 0.84, -6.2, 0.55, -5.5, 1.16, -5.5 ;
 
   ros::Subscriber pose_sub = n_h.subscribe("/j2s7s300/joint_states", 1, &joints_cb);  
   ros::Subscriber ee_vel_cmd_sub = n_h.subscribe("/j2s7s300/end_effector_vel_cmds", 1, &ee_vel_cb);
@@ -243,6 +243,8 @@ void control_update(const ros::TimerEvent& e){
 void reset_cb(const std_msgs::Bool& msg){
 	ROBOT.ranger = 10.0;
 	ROBOT_CMD.qdot_des = Eigen::VectorXd::Zero(7);
+	ROBOT_CMD.ee_vel = Eigen::VectorXd::Zero(6);
+	ROBOT_CMD.mode = 0;
 	init_params();
 	FORCE_GRIPPER_OPEN = true;
 	gripper_forced_t = ros::Time::now().toSec();
