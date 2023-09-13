@@ -16,7 +16,7 @@
 #include "libraries/utils.h"
 #include <mutex>
 
-ros::Publisher ee_vel_pub ;
+ros::Publisher ee_vel_pub, reset_pub ;
 
 struct RobotState{
 	Eigen::VectorXd q;
@@ -31,8 +31,11 @@ struct SetpointState{
 	Eigen::Vector3d xyn;
 	bool invalid_pixels;
 	double proximity;
+	Eigen::Vector3d lin_vel;
+	Eigen::Vector3d ang_vel;
 	
-	SetpointState() : ball_pos(Eigen::Vector3d(0.79,0.14,1.02)), xyn(Eigen::Vector3d(0,0,1)), invalid_pixels(true), proximity(0.0)  { }
+	SetpointState() : ball_pos(Eigen::Vector3d(0.79,0.14,1.02)), xyn(Eigen::Vector3d(0,0,1)), invalid_pixels(true), proximity(0.0),
+					  lin_vel(Eigen::Vector3d::Zero()), ang_vel(Eigen::Vector3d::Zero())  { }
 };
 
 void joints_cb(const sensor_msgs::JointState& );
@@ -60,8 +63,10 @@ int main(int argc, char** argv)
   ros::Rate rate(frequency);
 
   ros::Subscriber pose_sub = n_h.subscribe("/j2s7s300/joint_states", 1, &joints_cb);  
-  ros::Subscriber pixels_sub = n_h.subscribe("/j2s7s300/ball_data", 1, &pixels_cb);    
+  ros::Subscriber pixels_sub = n_h.subscribe("/j2s7s300/ball_data", 1, &pixels_cb);       
+//  ros::Subscriber pixels_sub = n_h.subscribe("/j2s7s300/ball_data", 1, &ranger_cb);       
   ee_vel_pub = n_h.advertise<geometry_msgs::Twist>("/j2s7s300/end_effector_vel_cmds", 1);
+  reset_pub = n_h.advertise<std_msgs::Bool>("/j2s7s300/reset", 1);  
     
   ros::Timer ctrl_timer = n_h.createTimer(ros::Duration(1.0/frequency), &control_update);  
 
@@ -80,7 +85,13 @@ void joints_cb(const sensor_msgs::JointState& msg){
 
 void pixels_cb(const geometry_msgs::Twist& msg){
 	if(msg.linear.z < -0.9){
-		ROBOT_CMD.invalid_pixels = true;
+		if(!ROBOT_CMD.invalid_pixels){
+			ROBOT_CMD.invalid_pixels = true;
+/*			std_msgs::Bool res;
+			res.data = true;
+			reset_pub.publish(res);
+*/
+		}
 		return;
 	}else{
 		ROBOT_CMD.invalid_pixels = false;
@@ -119,41 +130,92 @@ void control_update(const ros::TimerEvent& e){
 	ROBOT.T = fkbas(ROBOT.q); 
 	//do_position_ctrl();	
 
-	//do_pixel_tracking();
+	do_pixel_tracking();
 
 }
 
 void do_pixel_tracking(void){
 	if(ROBOT_CMD.invalid_pixels){
-		return;//TODO: Or publish zeros
+		geometry_msgs::Twist out_msg;	
+		out_msg.linear.x = 0;
+		out_msg.linear.y = 0;
+		out_msg.linear.z = 0;
+		out_msg.angular.x = 0;
+		out_msg.angular.y = 0;
+		out_msg.angular.z = 0;
+		ee_vel_pub.publish(out_msg);
+		return;
 	}
-	double x_dot_des = -0.1*sq_err(ROBOT_CMD.xyn(0));
-	double y_dot_des = -0.1*sq_err(ROBOT_CMD.xyn(1));
+	double x_dot_des = -13.0*sq_err(ROBOT_CMD.xyn(0));
+	double y_dot_des = -13.0*sq_err(ROBOT_CMD.xyn(1));
 	double weight = (1.0/(ROBOT_CMD.proximity+0.001));
 	weight = (weight > 1.0) ? 1.0 : weight;
-	Eigen::Vector2d xy_dot_des = weight * Eigen::Vector2d(x_dot_des, y_dot_des) ;
+	weight = (weight < 0.55) ? 0.55 : weight;
+	Eigen::Vector2d xy_dot_des = Eigen::Vector2d(x_dot_des, y_dot_des) ;
 
-	double Z_hat = 0.9/(ROBOT_CMD.proximity + 0.15);
+	double Z_hat = 0.75/(ROBOT_CMD.proximity + 0.15);
+	if(Z_hat > 3.0){
+		Z_hat = 3.0;
+	}
+/* FULL MAT
+	Eigen::MatrixXd t_mat(2,6);
+	t_mat(0,0) = -1.0/Z_hat;
+	t_mat(0,1) = 0.0;
+	t_mat(0,2) = ROBOT_CMD.xyn(0)/Z_hat;
+	t_mat(0,3) = ROBOT_CMD.xyn(0) * ROBOT_CMD.xyn(1) ;
+	t_mat(0,4) = -(1.0 + pow(ROBOT_CMD.xyn(0),2));
+	t_mat(0,5) = ROBOT_CMD.xyn(1);
+	t_mat(1,0) = 0.0;
+	t_mat(1,1) = -1.0/Z_hat;
+	t_mat(1,2) = ROBOT_CMD.xyn(1)/Z_hat;
+	t_mat(1,3) = (1.0 + pow(ROBOT_CMD.xyn(1),2));
+	t_mat(1,4) = -ROBOT_CMD.xyn(0)*ROBOT_CMD.xyn(1);
+	t_mat(1,5) = -ROBOT_CMD.xyn(0);
+*/	
+	Eigen::MatrixXd t_mat(2,5);
+	t_mat(0,0) = -1.0/Z_hat;
+	t_mat(0,1) = 0.0;
+	t_mat(0,2) = ROBOT_CMD.xyn(0) * ROBOT_CMD.xyn(1) ;
+	t_mat(0,3) = -(1.0 + pow(ROBOT_CMD.xyn(0),2));
+	t_mat(0,4) = ROBOT_CMD.xyn(1);
+	t_mat(1,0) = 0.0;
+	t_mat(1,1) = -1.0/Z_hat;
+	t_mat(1,2) = (1.0 + pow(ROBOT_CMD.xyn(1),2));
+	t_mat(1,3) = -ROBOT_CMD.xyn(0)*ROBOT_CMD.xyn(1);
+	t_mat(1,4) = -ROBOT_CMD.xyn(0);
+
+	double Vz = -0.03*(ROBOT_CMD.proximity - 33.0);
+	double gain = 1.0/(10.0*(abs(ROBOT_CMD.xyn(0)) + abs(ROBOT_CMD.xyn(1))));
+	gain = (gain>1.0) ? 1.0 : gain;
+	Vz *= gain;
+/*	if(abs(ROBOT_CMD.xyn(0))>0.26 || abs(ROBOT_CMD.xyn(1)>0.26)){
+		Vz = 0.0;
+	}
+*/	Eigen::Vector2d correction_vz;
+	correction_vz(0) = ROBOT_CMD.xyn(0)*Vz/Z_hat;
+	correction_vz(1) = ROBOT_CMD.xyn(1)*Vz/Z_hat;
+
+	Eigen::Vector2d lhs = xy_dot_des - correction_vz ;
+	Eigen::MatrixXd M(5,2);
+	M = Utils::pinv(t_mat, 0.001);
+	Eigen::VectorXd camera_vels = M * lhs ;
 	
+	Eigen::Vector3d lin_vel = 0.05 * ROBOT.T.block(0,0,3,3) * Eigen::Vector3d(camera_vels(0), camera_vels(1), Vz);
+	Eigen::Vector3d ang_vel = 0.05 * ROBOT.T.block(0,0,3,3) * Eigen::Vector3d(camera_vels(2), camera_vels(3), camera_vels(4));
+
+	//ROBOT_CMD.lin_vel = 0.95*ROBOT_CMD.lin_vel + 0.05*lin_vel;
+	//ROBOT_CMD.ang_vel = 0.95*ROBOT_CMD.ang_vel + 0.05*ang_vel;
+	ROBOT_CMD.ang_vel = ang_vel;
+	ROBOT_CMD.lin_vel = lin_vel;
 	
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-	
+	geometry_msgs::Twist out_msg;	
+	out_msg.linear.x = ROBOT_CMD.lin_vel(0);
+	out_msg.linear.y = ROBOT_CMD.lin_vel(1);
+	out_msg.linear.z = ROBOT_CMD.lin_vel(2);
+	out_msg.angular.x = ROBOT_CMD.ang_vel(0);
+	out_msg.angular.y = ROBOT_CMD.ang_vel(1);
+	out_msg.angular.z = ROBOT_CMD.ang_vel(2);
+	ee_vel_pub.publish(out_msg);
 }
 
 void do_position_ctrl(void){

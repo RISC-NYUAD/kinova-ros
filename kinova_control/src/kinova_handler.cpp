@@ -214,16 +214,19 @@ void control_update(const ros::TimerEvent& e){
 	if(ROBOT_CMD.mode == 1){		
 	  run_ee_vel_ctrl(); //updates ROBOT_CMD.qdot_des
 	}
-	for(size_t i = 0 ; i < 7 ; i++){	
-		ROBOT_CMD.q_des(i) += ROBOT_CMD.qdot_des(i) * c_dt ;
-		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)>Q_U(i)) ? Q_U(i) : ROBOT_CMD.q_des(i) ;
-		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)<Q_L(i)) ? Q_L(i) : ROBOT_CMD.q_des(i) ;
-	}					
 	
 	double fingers = 0.0;
 	if(ROBOT_CMD.fingers_closed){
 		fingers = 1.0;
 	}
+	if(fingers){
+		ROBOT_CMD.qdot_des = Eigen::VectorXd::Zero(7);
+	}
+	for(size_t i = 0 ; i < 7 ; i++){	
+		ROBOT_CMD.q_des(i) += ROBOT_CMD.qdot_des(i) * c_dt ;
+		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)>Q_U(i)) ? Q_U(i) : ROBOT_CMD.q_des(i) ;
+		ROBOT_CMD.q_des(i) = (ROBOT_CMD.q_des(i)<Q_L(i)) ? Q_L(i) : ROBOT_CMD.q_des(i) ;
+	}					
 //	ROS_WARN("STATE IS %d, CMD IS %.1f", ROBOT_CMD.fingers_closed, fingers);
 
 	trajectory_msgs::JointTrajectoryPoint q_temp;
@@ -278,7 +281,7 @@ void ranger_cb(const sensor_msgs::Range& msg){
 	}
 
 	ROBOT.ranger = msg.range;	
-	if(ROBOT.ranger < 0.045){
+	if(ROBOT.ranger < 0.03){
 		ROBOT.r_t++;
 		if(!ROBOT_CMD.fingers_closed){
 			if(ROBOT.r_t > 55){
@@ -288,7 +291,7 @@ void ranger_cb(const sensor_msgs::Range& msg){
 		}
 
 	}else{
-		if(ROBOT.ranger > 0.084){
+		if(ROBOT.ranger > 0.084){ //0.084
 			ROBOT.r_t = 0;
 			if((ros::Time::now().toSec() - ROBOT.ranger_activation_t) > 5.0){ 
 				ROBOT_CMD.fingers_closed = false;

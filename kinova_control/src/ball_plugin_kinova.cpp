@@ -114,8 +114,8 @@ public:
   		ft1 = msg.data;
   		double dt = ros::Time::now().toSec()-close_time; 
 //  		ROS_WARN("--%.2f\n",dt);
-  		if(dt>3.0){
-	  		this->applied_gain = 0;  			
+  		if(dt>2.0){
+	  		this->applied_gain = 0;
   		}
   	}else{
   		ft1 = msg.data;
