@@ -169,7 +169,7 @@
         <xacro:kinova_virtual_joint joint_name="${prefix}_joint_end_effector" type="${joint_end_effector_type}" parent="${prefix}_link_7" child="${prefix}_end_effector" joint_axis_xyz="${joint_end_effector_axis_xyz}" joint_origin_xyz="${joint_end_effector_origin_xyz}" joint_origin_rpy="${joint_end_effector_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0"/>
 
         <xacro:kinova_3fingers link_hand="${prefix}_link_7" prefix="${prefix}_"/>
-<!--
+
 	  <xacro:optical_flow_macro
 		namespace="${prefix}"
 		parent_link="${prefix}_end_effector"
@@ -180,9 +180,9 @@
 		enable_visual="1"
 		enable_mesh="1">
 		<cylinder radius="0.01" length="0.01"/>
-		<origin xyz="0.0 0.02 -0.02" rpy="0.0 ${-pi/2} 0.0" />
+		<origin xyz="0.0 0.02 -0.024" rpy="0.0 ${-pi/2} ${-pi}" />
 	  </xacro:optical_flow_macro>
--->
+
 <!--
 		<link name="${prefix}_grasp_object">
             <visual>
@@ -207,7 +207,7 @@
 
 	    <xacro:kinova_armjoint joint_name="${prefix}_joint_obj" type="${joint_obj_type}" parent="${prefix}_link_7" child="${prefix}_grasp_object" joint_axis_xyz="${joint_obj_axis_xyz}" joint_origin_xyz="${joint_obj_origin_xyz}" joint_origin_rpy="${joint_obj_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0" joint_velocity_limit="0" joint_torque_limit="0" fixed="false"/>
 -->
-
+<!--
 	  <xacro:d435_macro
 		namespace="${prefix}"
 		parent_link="${prefix}_end_effector"
@@ -220,7 +220,7 @@
 		<cylinder radius="0.01" length="0.01"/>
 		<origin xyz="0.0 0.0 -0.04" rpy="0.0 ${-pi/2} ${pi}" />
 	  </xacro:d435_macro>
-
+-->
 
 		<gazebo>
 		 <plugin name="gazebo_grasp_fix" filename="libgazebo_grasp_fix.so">

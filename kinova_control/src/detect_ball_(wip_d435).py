@@ -60,26 +60,23 @@ def img_cb(image_in):
         N = np.array(L)
         PX = np.sum(N[:,0]) / len(L)
         PY = np.sum(N[:,1]) / len(L)
-        int_px = int(PX)
-        int_py = int(PY)
-        P_ = np.array([ [int_py], [int_px], [1] ])
-        normalized_P_ = np.matmul(np.linalg.inv(CamMatrix),P_)
+        
         
         tot_pixel = output.size
         red_pixel = np.count_nonzero(output)
         percentage = round(100 * red_pixel / tot_pixel, 2)
         #print(percentage, PX, PY)
         results = Twist()
-        results.linear.x = normalized_P_[0]
-        results.linear.y = normalized_P_[1]
+        results.linear.x = PX
+        results.linear.y = PY
         results.linear.z = percentage
         pub.publish(results)
-        cv2.imshow("Image Preview", output)
-        cv2.waitKey(3)
+        #cv2.imshow("Image Preview", output)
+        #cv2.waitKey(3)
     else:
         results = Twist()
-        results.linear.x = -10
-        results.linear.y = -10
+        results.linear.x = -1
+        results.linear.y = -1
         results.linear.z = -1
         pub.publish(results)        
 
@@ -97,11 +94,14 @@ if __name__ == '__main__':
     pub = rospy.Publisher('/j2s7s300/ball_data', Twist, queue_size=1) 
     bridge = CvBridge()
     
-    cam_info = rospy.wait_for_message("/camera_flow/camera_info", CameraInfo)
+    cam_info = rospy.wait_for_message("/camera_d435/color/camera_info", CameraInfo)
+    depth_cam_info = rospy.wait_for_message("/camera_d435/depth/camera_info", CameraInfo)    
 
     CamMatrix = np.array(cam_info.K).reshape((3,3))
     CamDist = np.array(cam_info.D).reshape((1,5))
+    DepthCamMatrix = np.array(depth_cam_info.K).reshape((3,3))
 
-    rospy.Subscriber("/camera_flow/image_raw", Image, img_cb, queue_size=1)
+    rospy.Subscriber("/camera_d435/color/image_raw", Image, img_cb, queue_size=1)
+    rospy.Subscriber("/camera_d435/depth/image_raw", Image, depth_img_cb, queue_size=1)    
     rospy.spin()    
     

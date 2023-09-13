@@ -79,9 +79,9 @@ public:
 	ignition::math::Quaternion ball_quat = ball->WorldCoGPose().Rot();
 	ignition::math::Vector3d ball_velocity = ball_quat.RotateVector(ball->RelativeLinearVel()) ; 
 	
-  	double fx = -6.0 * (ball_position.X() - des_ball_position.X()) - 0.3*ball_velocity.X();
-  	double fy = -6.0 * (ball_position.Y() - des_ball_position.Y()) - 0.3*ball_velocity.Y();
-  	double fz = -6.0 * (ball_position.Z() - des_ball_position.Z()) - 0.3*ball_velocity.Z() + 0.05*9.81;
+  	double fx = -80.0 * (ball_position.X() - des_ball_position.X()) - 0.3*ball_velocity.X();
+  	double fy = -80.0 * (ball_position.Y() - des_ball_position.Y()) - 0.3*ball_velocity.Y();
+  	double fz = -80.0 * (ball_position.Z() - des_ball_position.Z()) - 0.3*ball_velocity.Z() + 0.05*9.81;
   	fx *= this->applied_gain ;
   	fy *= this->applied_gain ;
   	fz *= this->applied_gain ;

@@ -28,14 +28,20 @@ struct RobotState{
 
 struct SetpointState{
 	Eigen::Vector3d ball_pos;
-
-	SetpointState() : ball_pos(Eigen::Vector3d(0.79,0.14,1.02)) { }
+	Eigen::Vector3d xyn;
+	bool invalid_pixels;
+	double proximity;
+	
+	SetpointState() : ball_pos(Eigen::Vector3d(0.79,0.14,1.02)), xyn(Eigen::Vector3d(0,0,1)), invalid_pixels(true), proximity(0.0)  { }
 };
 
 void joints_cb(const sensor_msgs::JointState& );
 Eigen::Matrix4d fkbas(Eigen::VectorXd );
 void control_update(const ros::TimerEvent&);
 void control_update_opt(const ros::TimerEvent&);
+void do_position_ctrl(void);
+void do_pixel_tracking(void);
+void pixels_cb(const geometry_msgs::Twist& );
 double lp_filt(double, double, double);
 Eigen::Vector3d sq_err(Eigen::Vector3d );
 double sq_err(double );
@@ -54,6 +60,7 @@ int main(int argc, char** argv)
   ros::Rate rate(frequency);
 
   ros::Subscriber pose_sub = n_h.subscribe("/j2s7s300/joint_states", 1, &joints_cb);  
+  ros::Subscriber pixels_sub = n_h.subscribe("/j2s7s300/ball_data", 1, &pixels_cb);    
   ee_vel_pub = n_h.advertise<geometry_msgs::Twist>("/j2s7s300/end_effector_vel_cmds", 1);
     
   ros::Timer ctrl_timer = n_h.createTimer(ros::Duration(1.0/frequency), &control_update);  
@@ -69,6 +76,17 @@ void joints_cb(const sensor_msgs::JointState& msg){
 	for(size_t i = 0 ; i < 7 ; i++){
 		ROBOT.q(i) = msg.position[i] ;
 	}
+}
+
+void pixels_cb(const geometry_msgs::Twist& msg){
+	if(msg.linear.z < -0.9){
+		ROBOT_CMD.invalid_pixels = true;
+		return;
+	}else{
+		ROBOT_CMD.invalid_pixels = false;
+	}
+	ROBOT_CMD.xyn = Eigen::Vector3d(msg.linear.x, msg.linear.y, 1.0);
+	ROBOT_CMD.proximity = msg.linear.z ;	
 }
 
 Eigen::Matrix4d fkbas(Eigen::VectorXd x){
@@ -99,6 +117,46 @@ Eigen::Matrix4d fkbas(Eigen::VectorXd x){
 
 void control_update(const ros::TimerEvent& e){
 	ROBOT.T = fkbas(ROBOT.q); 
+	//do_position_ctrl();	
+
+	//do_pixel_tracking();
+
+}
+
+void do_pixel_tracking(void){
+	if(ROBOT_CMD.invalid_pixels){
+		return;//TODO: Or publish zeros
+	}
+	double x_dot_des = -0.1*sq_err(ROBOT_CMD.xyn(0));
+	double y_dot_des = -0.1*sq_err(ROBOT_CMD.xyn(1));
+	double weight = (1.0/(ROBOT_CMD.proximity+0.001));
+	weight = (weight > 1.0) ? 1.0 : weight;
+	Eigen::Vector2d xy_dot_des = weight * Eigen::Vector2d(x_dot_des, y_dot_des) ;
+
+	double Z_hat = 0.9/(ROBOT_CMD.proximity + 0.15);
+	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+	
+}
+
+void do_position_ctrl(void){
 	Eigen::Vector3d ee_w_pos_error = ROBOT.T.block(0,3,3,1) - ROBOT_CMD.ball_pos;
 	Eigen::Vector3d lin_vels = -0.05*sq_err(ee_w_pos_error);
 	geometry_msgs::Twist out_msg;
@@ -114,7 +172,7 @@ void control_update(const ros::TimerEvent& e){
 	Eigen::Vector3d omega = Utils::cross(unit_P, -eta*z);
 	if(P_norm < 0.15){
 		omega *= P_norm;
-		lin_vels *= P_norm;
+		lin_vels *= 5.0*P_norm;
 	}
 	if(error_func < 0.2){
 		out_msg.linear.x = lin_vels(0);

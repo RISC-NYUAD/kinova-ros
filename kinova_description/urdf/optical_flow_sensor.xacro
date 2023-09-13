@@ -8,14 +8,14 @@
       enable_visual enable_mesh *geometry *origin">
     <link name="${namespace}_flow_camera_link">
       <collision>
-        <origin xyz="0 0 0" rpy="0 0 0" />
+        <origin xyz="-0.015 0 0" rpy="0 0 0" />
         <geometry>
           <xacro:insert_block name="geometry" />
         </geometry>
       </collision>
       <xacro:if value="${enable_visual}">
         <visual>
-          <origin xyz="0 0 0" rpy="0 0 ${-pi/2}" />
+          <origin xyz="0 0.02 0" rpy="0 0 ${-pi/2}" />
           <geometry>
           	<xacro:if value="${enable_mesh}">
  	           <mesh filename="package://uav_simulator/meshes/PX4Flow.stl" scale="1 1 1" /> 
@@ -36,6 +36,12 @@
       <xacro:insert_block name="origin" />
       <parent link="${parent_link}" />
       <child link="${namespace}_flow_camera_link" />
+    </joint>
+    <link name="${namespace}_flow_camera_optical_link"/>
+    <joint name="${namespace}_flow_camera_optical_joint" type="fixed">
+      <origin xyz="0 0 0" rpy="${pi/2} ${pi} ${pi/2}"/>
+      <parent link="${namespace}_flow_camera_link"/>
+      <child link="${namespace}_flow_camera_optical_link"/>
     </joint>
     <gazebo reference="${namespace}_flow_camera_link">
       <sensor type="camera" name="${namespace}_camera_flow">
@@ -64,7 +70,7 @@
 		      <cameraName>camera_flow</cameraName>
 		      <imageTopicName>image_raw</imageTopicName>
 		      <cameraInfoTopicName>camera_info</cameraInfoTopicName>
-		      <frameName>${namespace}_flow_camera_link</frameName>
+		      <frameName>${namespace}_flow_camera_optical_link</frameName>
 		      <hackBaseline>0.07</hackBaseline>
 		      <distortionK1>0.0</distortionK1>
 		      <distortionK2>0.0</distortionK2>
@@ -96,7 +102,7 @@
       </inertial>
     </link>		
     <joint name="${namespace}_z_ranger_joint" type="revolute">
-      <origin xyz="0 -0.008 -0.04" rpy="0 ${-pi/2} 0"/>
+      <origin xyz="0 0.012 -0.04" rpy="0 ${-pi/2} 0"/>
       <parent link="${parent_link}" />
       <child link="${namespace}_z_ranger_link" />
       <axis xyz="0 0 1"/>
@@ -108,7 +114,7 @@
 			 <selfCollide>0</selfCollide>     
 		   <sensor type="ray" name="rangefinder">
 			  <pose>0 0 0 0 0 0</pose>
-			  <visualize>false</visualize>
+			  <visualize>true</visualize>
 			  <update_rate>30</update_rate>
 				<ray>
 	        <scan>
