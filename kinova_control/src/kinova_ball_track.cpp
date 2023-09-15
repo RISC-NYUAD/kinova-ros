@@ -58,7 +58,7 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "kinova_ee_track_node");		
   ros::NodeHandle n_h;
-  double frequency = 50;
+  double frequency = 10;
   c_dt = (1.0/frequency);
   ros::Rate rate(frequency);
 
@@ -146,8 +146,8 @@ void do_pixel_tracking(void){
 		ee_vel_pub.publish(out_msg);
 		return;
 	}
-	double x_dot_des = -13.0*sq_err(ROBOT_CMD.xyn(0));
-	double y_dot_des = -13.0*sq_err(ROBOT_CMD.xyn(1));
+	double x_dot_des = -8.0*sq_err(ROBOT_CMD.xyn(0));
+	double y_dot_des = -8.0*sq_err(ROBOT_CMD.xyn(1));
 	double weight = (1.0/(ROBOT_CMD.proximity+0.001));
 	weight = (weight > 1.0) ? 1.0 : weight;
 	weight = (weight < 0.55) ? 0.55 : weight;
@@ -184,7 +184,7 @@ void do_pixel_tracking(void){
 	t_mat(1,3) = -ROBOT_CMD.xyn(0)*ROBOT_CMD.xyn(1);
 	t_mat(1,4) = -ROBOT_CMD.xyn(0);
 
-	double Vz = -0.03*(ROBOT_CMD.proximity - 33.0);
+	double Vz = -0.02*(ROBOT_CMD.proximity - 33.0);
 	double gain = 1.0/(10.0*(abs(ROBOT_CMD.xyn(0)) + abs(ROBOT_CMD.xyn(1))));
 	gain = (gain>1.0) ? 1.0 : gain;
 	Vz *= gain;

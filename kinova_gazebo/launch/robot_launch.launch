@@ -28,6 +28,7 @@
 	<arg name="x" value="1"/>
 	<arg name="y" value="0"/>
 	<arg name="z" value="1"/>
+	<arg name="ball_radius" value="0.03"/>
   </include>
 
   <!-- Load the URDF into the ROS Parameter Server -->

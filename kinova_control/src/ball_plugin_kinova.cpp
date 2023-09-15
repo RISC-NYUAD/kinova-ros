@@ -10,6 +10,11 @@
 #include <ignition/math/Vector3.hh>
 #include <iostream>
 #include <string>
+#include <chrono>
+#include <thread>
+#include <time.h>
+
+#define DO_PATHS 1
 
 namespace gazebo {
 class BallHoldSensor : public ModelPlugin {
@@ -18,7 +23,7 @@ public:
   
 public:
   ros::Subscriber gain_sub, reset_sub, finger_sub;
-  
+
 public:
   physics::LinkPtr ball;
   
@@ -52,6 +57,7 @@ public:
     this->uninitialized = true ;
     ft1 = 0;
     close_time = 0;
+	std::srand(8560);    
     
 
     std::string gainTopicName = "/j2s7s300/ball/gain";
@@ -78,14 +84,36 @@ public:
   	ignition::math::Vector3d ball_position = ball->WorldCoGPose().Pos();
 	ignition::math::Quaternion ball_quat = ball->WorldCoGPose().Rot();
 	ignition::math::Vector3d ball_velocity = ball_quat.RotateVector(ball->RelativeLinearVel()) ; 
-	
-  	double fx = -80.0 * (ball_position.X() - des_ball_position.X()) - 0.3*ball_velocity.X();
-  	double fy = -80.0 * (ball_position.Y() - des_ball_position.Y()) - 0.3*ball_velocity.Y();
-  	double fz = -80.0 * (ball_position.Z() - des_ball_position.Z()) - 0.3*ball_velocity.Z() + 0.05*9.81;
-  	fx *= this->applied_gain ;
-  	fy *= this->applied_gain ;
-  	fz *= this->applied_gain ;
-  	ball->AddForceAtRelativePosition(ignition::math::Vector3d(fx,fy,fz), ignition::math::Vector3d(0.0,0.0,0.0));
+
+	if(DO_PATHS){
+		this->seq++;
+		float x_vel = (float) rand()/RAND_MAX ;
+		x_vel -= 0.5;
+		float y_vel = (float) rand()/RAND_MAX ;
+		y_vel -= 0.5; 
+		//y_vel = 0.1*sin(0.001*(this->seq));
+		float z_vel = (float) rand()/RAND_MAX ;
+		z_vel -= 0.5; 				
+		//double x_des = ball_position.X() + x_vel * 0.001;
+	  	double x_des = des_ball_position.X() + x_vel*0.1 ;
+	  	double y_des = des_ball_position.Y() + y_vel*0.1 ;
+	  	double z_des = des_ball_position.Z() + z_vel*0.1 ;	  		  	
+	  	double fx = -10.0 * (ball_position.X() - x_des) - 0.3*ball_velocity.X();
+	  	double fy = -10.0 * (ball_position.Y() - y_des) - 0.3*ball_velocity.Y();
+	  	double fz = -10.0 * (ball_position.Z() - z_des) - 0.3*ball_velocity.Z() + 0.05*9.81;
+	  	fx *= this->applied_gain ;
+	  	fy *= this->applied_gain ;
+	  	fz *= this->applied_gain ;
+	  	ball->AddForceAtRelativePosition(ignition::math::Vector3d(fx,fy,fz), ignition::math::Vector3d(0.0,0.0,0.0));		
+	}else{
+	  	double fx = -80.0 * (ball_position.X() - des_ball_position.X()) - 0.3*ball_velocity.X();
+	  	double fy = -80.0 * (ball_position.Y() - des_ball_position.Y()) - 0.3*ball_velocity.Y();
+	  	double fz = -80.0 * (ball_position.Z() - des_ball_position.Z()) - 0.3*ball_velocity.Z() + 0.05*9.81;
+	  	fx *= this->applied_gain ;
+	  	fy *= this->applied_gain ;
+	  	fz *= this->applied_gain ;
+	  	ball->AddForceAtRelativePosition(ignition::math::Vector3d(fx,fy,fz), ignition::math::Vector3d(0.0,0.0,0.0));
+	}
   }
 
 public: 
