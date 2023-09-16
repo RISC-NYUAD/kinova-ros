@@ -5,6 +5,8 @@
 #include <gazebo/common/Plugin.hh>
 #include <gazebo/common/common.hh>
 #include <gazebo/gazebo.hh>
+#include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Point.h>
 #include <gazebo/physics/physics.hh>
 #include <ignition/math.hh>
 #include <ignition/math/Vector3.hh>
@@ -23,6 +25,9 @@ public:
   
 public:
   ros::Subscriber gain_sub, reset_sub, finger_sub;
+
+public:
+  ros::Publisher ball_vel_pub, ball_pos_pub;
 
 public:
   physics::LinkPtr ball;
@@ -67,7 +72,10 @@ public:
     gain_sub = nh.subscribe(gainTopicName, 1, &BallHoldSensor::onGain, this);    
     finger_sub = nh.subscribe(fingerTopicName, 1, &BallHoldSensor::onGripperAction, this);        
     reset_sub = nh.subscribe(resetTopicName, 1, &BallHoldSensor::onReset, this);    
-    
+
+	ball_vel_pub = nh.advertise<geometry_msgs::Twist>("/j2s7s300/ball/velocity", 1);
+	ball_pos_pub = nh.advertise<geometry_msgs::Point>("/j2s7s300/ball/position", 1);
+
     std::string ballName = "ball::ball/base_link";
     ball = this->model->GetLink(ballName);    
     
@@ -91,12 +99,12 @@ public:
 		x_vel -= 0.5;
 		float y_vel = (float) rand()/RAND_MAX ;
 		y_vel -= 0.5; 
-		//y_vel = 0.1*sin(0.001*(this->seq));
+		y_vel = 0.1*sin(0.001*(this->seq));
 		float z_vel = (float) rand()/RAND_MAX ;
 		z_vel -= 0.5; 				
 		//double x_des = ball_position.X() + x_vel * 0.001;
 	  	double x_des = des_ball_position.X() + x_vel*0.1 ;
-	  	double y_des = des_ball_position.Y() + y_vel*0.1 ;
+	  	double y_des = des_ball_position.Y() + y_vel ;
 	  	double z_des = des_ball_position.Z() + z_vel*0.1 ;	  		  	
 	  	double fx = -10.0 * (ball_position.X() - x_des) - 0.3*ball_velocity.X();
 	  	double fy = -10.0 * (ball_position.Y() - y_des) - 0.3*ball_velocity.Y();
@@ -130,7 +138,20 @@ public:
   void onUpdate() {
     if(this->applied_gain > 0){
 		setBallForces();
+		ignition::math::Vector3d ball_velocity = ball->WorldLinearVel() ;
+	  	ignition::math::Vector3d ball_position = ball->WorldCoGPose().Pos();		 		
+		geometry_msgs::Twist msg_out;
+		geometry_msgs::Point pos_msg;
+		msg_out.linear.x = ball_velocity.X();
+		msg_out.linear.y = ball_velocity.Y();
+		msg_out.linear.z = ball_velocity.Z();				
+		pos_msg.x = ball_position.X();
+		pos_msg.y = ball_position.Y();
+		pos_msg.z = ball_position.Z();
+		ball_vel_pub.publish(msg_out);
+		ball_pos_pub.publish(pos_msg);
 	}
+	
   }
 
 public:

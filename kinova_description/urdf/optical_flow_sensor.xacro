@@ -115,7 +115,7 @@
 		   <sensor type="ray" name="rangefinder">
 			  <pose>0 0 0 0 0 0</pose>
 			  <visualize>true</visualize>
-			  <update_rate>30</update_rate>
+			  <update_rate>200</update_rate>
 				<ray>
 	        <scan>
 	          <horizontal>
@@ -141,7 +141,7 @@
             <frameName>${namespace}_z_ranger_link</frameName>
             <gaussianNoise>0.000</gaussianNoise>
             <alwaysOn>true</alwaysOn>.
-            <updateRate>30</updateRate>
+            <updateRate>200</updateRate>
             <radiation>infrared</radiation>
             <fov>0.10</fov>
             <visualize>true</visualize>

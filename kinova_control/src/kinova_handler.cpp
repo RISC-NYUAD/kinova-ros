@@ -284,7 +284,7 @@ void ranger_cb(const sensor_msgs::Range& msg){
 	if(ROBOT.ranger < 0.03){
 		ROBOT.r_t++;
 		if(!ROBOT_CMD.fingers_closed){
-			if(ROBOT.r_t > 55){
+			if(ROBOT.r_t > 5){//55
 				ROBOT_CMD.fingers_closed = true;
 				ROBOT.ranger_activation_t = ros::Time::now().toSec();
 			}
