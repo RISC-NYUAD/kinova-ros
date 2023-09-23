@@ -20,7 +20,7 @@
 ros::Publisher ee_vel_pub, reset_pub ;
 #define USE_GROUND_TRUTH 0
 #define USE_ATTACK 1
-
+#define TESTING 1
 
 struct RobotState{
 	Eigen::VectorXd q;
@@ -51,6 +51,7 @@ Eigen::Matrix4d fkbas(Eigen::VectorXd );
 void control_update(const ros::TimerEvent&);
 void control_update_opt(const ros::TimerEvent&);
 void do_position_ctrl(void);
+void do_testing_ctrl(void);
 void do_pixel_tracking(void);
 void pixels_cb(const geometry_msgs::Twist& );
 double lp_filt(double, double, double);
@@ -67,9 +68,9 @@ int main(int argc, char** argv)
 {
   ros::init(argc, argv, "kinova_ee_track_node");		
   ros::NodeHandle n_h;
-  double frequency = 100;
+  double frequency = 2;
   c_dt = (1.0/frequency);
-  ros::Rate rate(500);
+  ros::Rate rate(200);
   vel_cb_dt = 0.01;
   last_vel_t = -1.0;
 
@@ -162,11 +163,90 @@ Eigen::Matrix4d fkbas(Eigen::VectorXd x){
 
 void control_update(const ros::TimerEvent& e){
 	ROBOT.T = fkbas(ROBOT.q); 
+	if(TESTING){
+		do_testing_ctrl();
+		return;
+	}
 	if(USE_GROUND_TRUTH){
 		do_position_ctrl();	
 	}else{
 		do_pixel_tracking();
 	}
+}
+
+void do_testing_ctrl(void){
+	ROBOT.T = fkbas(ROBOT.q); 
+	Eigen::Vector3d ee_w_pos_error = ROBOT.T.block(0,3,3,1) - Eigen::Vector3d(0.79,0.14,1.02);
+	Eigen::Vector3d lin_vels = -0.15*sq_err(ee_w_pos_error);
+
+	Eigen::Vector3d P_ = -ee_w_pos_error;
+	double P_norm = P_.norm() + 0.001;
+	Eigen::Vector3d unit_P = (1.0/P_norm) * P_ ;	
+//	unit_P << 0.0, 1.0, 0.0 ;	
+	Eigen::Vector3d nz_des = unit_P;
+	
+	Eigen::Vector3d nx_prev = ROBOT.T.block(0,0,3,1);
+	Eigen::Vector3d ny_prev = ROBOT.T.block(0,1,3,1);	
+	Eigen::Vector3d nz_prev = ROBOT.T.block(0,2,3,1);
+	Eigen::Matrix3d R_curr = ROBOT.T.block(0,0,3,3);
+
+	Eigen::Vector3d nx_des = Eigen::Vector3d(nx_prev(0), nx_prev(1), sqrt(1.0 - pow(unit_P(2),2)));
+	Eigen::Matrix3d K_sq = Eigen::Matrix3d::Identity();
+	K_sq(0,0) = 4.0;
+	Eigen::Matrix3d Hm = K_sq;
+	Eigen::Vector3d fm = - K_sq * nx_des ;
+	Eigen::MatrixXd A(6,3);
+	A.block(0,0,3,3) = Eigen::Matrix3d::Identity(); 
+	A.block(3,0,3,3) = -Eigen::Matrix3d::Identity();
+	Eigen::VectorXd b(6);
+	b << -1.0, -1.0, -1.0, -1.0, -1.0, -1.0;
+	
+	Eigen::MatrixXd A_eq(1,3);
+	A_eq(0,0) = unit_P(0);
+	A_eq(0,1) = unit_P(1);
+	A_eq(0,2) = unit_P(2);
+	Eigen::VectorXd B_eq(1);
+	B_eq << 0.0 ;
+	
+	Eigen::Vector3d nx_new = Utils::solveQP(Hm, fm, A, b, A_eq, B_eq);
+	if(!(nx_new.size()>0)){
+		ROS_ERROR("Problem");
+		nx_new = Eigen::Vector3d::Zero();
+		nx_new(0) = 1.0;
+	}else{
+		double X_norm = nx_new.norm() + 0.001;
+		nx_new = (1.0/X_norm) * nx_new ;
+	}
+	Eigen::Vector3d ny_new = Utils::cross(unit_P, nx_new);
+	double Y_norm = ny_new.norm() + 0.001;
+	ny_new = (1.0/Y_norm) * ny_new ;
+	Eigen::Matrix3d R_des ;
+	R_des.block(0,0,3,1) = nx_new;
+	R_des.block(0,1,3,1) = ny_new;
+	R_des.block(0,2,3,1) = unit_P;
+	std::cout << "------------------" << std::endl;
+	std::cout << "R_des: " << std::endl;
+	std::cout << R_des << std::endl;		
+	std::cout << "------------------" << std::endl;
+
+	Eigen::Matrix3d E_ = R_curr * (R_des.transpose());
+	Eigen::Matrix3d P_of_E = 0.5 * (E_ - E_.transpose());
+	Eigen::Vector3d w = -0.7 * Eigen::Vector3d(P_of_E(2,1), P_of_E(0,2), P_of_E(1,0));
+	double error_metric = (Eigen::Matrix3d::Identity() - E_).trace();
+	std::cout << error_metric << std::endl;
+	if(error_metric > 0.15){
+		lin_vels = Eigen::Vector3d::Zero();
+	}
+
+	geometry_msgs::Twist out_msg;	
+	out_msg.linear.x = 0.2*lin_vels(0);
+	out_msg.linear.y = 0.2*lin_vels(1);
+	out_msg.linear.z = 0.2*lin_vels(2);
+	out_msg.angular.x = w(0);
+	out_msg.angular.y = w(1);
+	out_msg.angular.z = w(2);
+	ee_vel_pub.publish(out_msg);
+
 }
 
 void do_pixel_tracking(void){

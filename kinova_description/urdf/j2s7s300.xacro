@@ -207,6 +207,7 @@
 
 	    <xacro:kinova_armjoint joint_name="${prefix}_joint_obj" type="${joint_obj_type}" parent="${prefix}_link_7" child="${prefix}_grasp_object" joint_axis_xyz="${joint_obj_axis_xyz}" joint_origin_xyz="${joint_obj_origin_xyz}" joint_origin_rpy="${joint_obj_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0" joint_velocity_limit="0" joint_torque_limit="0" fixed="false"/>
 -->
+
 <!--
 	  <xacro:d435_macro
 		namespace="${prefix}"

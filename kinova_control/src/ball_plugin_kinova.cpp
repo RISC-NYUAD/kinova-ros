@@ -16,7 +16,7 @@
 #include <thread>
 #include <time.h>
 
-#define DO_PATHS 1
+#define DO_PATHS 0
 
 namespace gazebo {
 class BallHoldSensor : public ModelPlugin {
