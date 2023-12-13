@@ -165,9 +165,33 @@
         <xacro:kinova_armlink link_name="${prefix}_link_7" link_mesh="${link_7_mesh}" use_ring_mesh="true" ring_mesh="ring_small" mesh_no="${link_7_mesh_no}"/>
         <xacro:kinova_armjoint joint_name="${prefix}_joint_7" type="${joint_7_type}" parent="${prefix}_link_6" child="${prefix}_link_7" joint_axis_xyz="${joint_7_axis_xyz}" joint_origin_xyz="${joint_7_origin_xyz}" joint_origin_rpy="${joint_7_origin_rpy}" joint_lower_limit="${joint_7_lower_limit}" joint_upper_limit="${joint_7_upper_limit}" joint_velocity_limit="${joint_7_velocity_limit}" joint_torque_limit="${joint_7_torque_limit}"/>
 
+<!--
         <xacro:kinova_virtual_link link_name="${prefix}_end_effector"/>
         <xacro:kinova_virtual_joint joint_name="${prefix}_joint_end_effector" type="${joint_end_effector_type}" parent="${prefix}_link_7" child="${prefix}_end_effector" joint_axis_xyz="${joint_end_effector_axis_xyz}" joint_origin_xyz="${joint_end_effector_origin_xyz}" joint_origin_rpy="${joint_end_effector_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0"/>
+-->
 
+		<link name="${prefix}_push_part">
+            <visual>
+                <geometry>
+                    <cylinder radius="0.1" length="0.02"/>
+                </geometry>
+            </visual>
+            <collision>
+                <geometry>
+                    <cylinder radius="0.1" length="0.02"/>
+                </geometry>
+            </collision>
+			<inertial>
+		    	<origin xyz="0 0 0" rpy="0 0 0"/>
+		  		<mass value="0.01"/>
+		  		<inertia
+					ixx="0.00001" ixy="0.0" ixz="0.0"
+					iyy="0.00001" iyz="0.0"
+					izz="0.00001"/>
+			</inertial>
+         </link>
+
+	    <xacro:kinova_armjoint joint_name="${prefix}_joint_obj" type="${joint_obj_type}" parent="${prefix}_link_7" child="${prefix}_push_part" joint_axis_xyz="${joint_obj_axis_xyz}" joint_origin_xyz="${joint_obj_origin_xyz}" joint_origin_rpy="${joint_obj_origin_rpy}" joint_lower_limit="0" joint_upper_limit="0" joint_velocity_limit="0" joint_torque_limit="0" fixed="false"/>
 
 <!--
         <xacro:kinova_3fingers link_hand="${prefix}_link_7" prefix="${prefix}_"/>
