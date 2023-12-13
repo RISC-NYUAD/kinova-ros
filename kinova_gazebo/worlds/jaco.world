@@ -20,9 +20,9 @@
       </camera>
     </gui>
 
-<!--
+
     <light type="directional" name="light_1">
-      <pose>0 0 1.5 0 0 0</pose>
+      <pose>1 0 1.5 0 0 0</pose>
       <diffuse>0.7 0.7 0.7 1</diffuse>
       <specular>.1 .1 .1 1</specular>
       <attenuation>
@@ -36,7 +36,7 @@
     </light>
 
     <light type="directional" name="light_3">
-      <pose>0 0 1.5 0 0 0</pose>
+      <pose>0.8 0 1.5 0 0 0</pose>
       <diffuse>0.7 0.7 0.7 1</diffuse>
       <specular>.1 .1 .1 1</specular>
       <attenuation>
@@ -76,7 +76,7 @@
       <cast_shadows>false</cast_shadows>
       <direction>0 -1 0</direction>
     </light>
--->
+
 
   </world>
 </sdf>
