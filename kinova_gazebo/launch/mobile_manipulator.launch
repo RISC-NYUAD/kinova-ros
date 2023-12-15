@@ -57,7 +57,7 @@
   </include> 
 
 
-  <node name="ctrl_handler" type="kinova_handle_node" pkg="kinova_control" output="screen"/>
+  <node name="ctrl_handler" type="kinova_mobile_node" pkg="kinova_control" output="screen"/>
 
 </launch>
 

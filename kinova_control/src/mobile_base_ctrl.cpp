@@ -5,6 +5,7 @@
 #include <ros/ros.h>
 #include <std_msgs/Float64.h>
 #include <geometry_msgs/Twist.h>
+#include <geometry_msgs/Pose.h>
 #include <iostream>
 #include <string>
 #include <time.h>
@@ -20,6 +21,7 @@ class MobileBasePlugin : public ModelPlugin
 
 public: ros::NodeHandle nh;
 public: ros::Subscriber base_vel_sub;
+public: ros::Publisher base_pose_pub;
 public: Eigen::Vector3d J_f;
 private: double Kp, Kd, Ki, vx_cmd, vy_cmd, wz_cmd, x_err_prev, x_err_dot, y_err_prev, y_err_dot, w_err_prev, w_err_dot;
 public: double LIM_;
@@ -53,9 +55,11 @@ public: void Load(physics::ModelPtr _parent, sdf::ElementPtr _sdf)
 			this->Ki = _sdf->GetElement("Ki")->Get<double>();				
 
 		std::string cmdTopic = "/j2s7s300/mobile_base/cmd_vel" ;
+		std::string poseTopic = "/j2s7s300/mobile_base/pose" ;
 
 		base_vel_sub = nh.subscribe(cmdTopic, 1, &MobileBasePlugin::vel_callback, this); 
-		
+		base_pose_pub = nh.advertise<geometry_msgs::Pose>(poseTopic, 1);
+				
 	  	this->updateConnection = event::Events::ConnectWorldUpdateBegin(std::bind(&MobileBasePlugin::onUpdate, this));
 		
 	}  
@@ -66,6 +70,19 @@ public: void onUpdate()
 		physics::LinkPtr base_link = this->model->GetLink(link_name) ;
 		ignition::math::Vector3d lin_vel = base_link->RelativeLinearVel();
 		ignition::math::Vector3d ang_vel = base_link->RelativeAngularVel();		
+
+	    ignition::math::Pose3d pose = base_link->WorldCoGPose();
+	    ignition::math::Quaternion orientation = pose.Rot();
+	    ignition::math::Vector3d position = pose.Pos();
+	    geometry_msgs::Pose out_msg;
+	    out_msg.position.x = position.X();	
+	    out_msg.position.y = position.Y();
+	    out_msg.position.z = position.Z();
+	    out_msg.orientation.x = orientation.X();
+	    out_msg.orientation.y = orientation.Y();
+	    out_msg.orientation.z = orientation.Z();
+	    out_msg.orientation.w = orientation.W();	    	    	
+		base_pose_pub.publish(out_msg);
 
 		#ifdef WITH_CONTROL
 
@@ -113,8 +130,6 @@ public: void onUpdate()
 		base_link->AddTorque(ignition::math::Vector3d(0.0,0.0,m_z));
 		
 		#else
-	    ignition::math::Pose3d pose = base_link->WorldCoGPose();
-	    ignition::math::Quaternion orientation = pose.Rot();
 		ignition::math::Matrix3d R_bw(orientation);
 		ignition::math::Vector3d vel_local = R_bw * ignition::math::Vector3d(this->vx_cmd,this->vy_cmd,0.0);
 		

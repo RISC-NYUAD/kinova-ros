@@ -49,9 +49,11 @@ install(PROGRAMS
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 
+add_executable(kinova_mobile_node src/kinova_mobile.cpp src/libraries/utils.cpp)
+target_link_libraries(kinova_mobile_node ${catkin_LIBRARIES})
+
 add_executable(kinova_handle_node src/kinova_handler.cpp src/libraries/utils.cpp)
 target_link_libraries(kinova_handle_node ${catkin_LIBRARIES})
-
 
 add_executable(kinova_ee_track_node src/kinova_ball_track.cpp src/libraries/utils.cpp)
 target_link_libraries(kinova_ee_track_node ${catkin_LIBRARIES})
